@@ -1,32 +1,286 @@
 LLM: ChatGPT-4.
-Date: 2 January 2024
+Date: 22, February, 2024
 
+Full conversation: https://chat.openai.com/share/8d52cc19-0a4f-4359-bdd3-5e1e26f3a2a9 
+
+11.3 Missing data
+We have discussed missing data a lot throughout this book, especially in Chapter 6. Here we return to it because understanding missing data tends to be a substantial focus of EDA. When we find missing data—and there are always missing data of some sort or another—we want to establish what type of missingness we are dealing with. Focusing on known-missing observations, that is where there are observations that we can see are missing in the dataset, based on Gelman, Hill, and Vehtari (2020, 323) we consider three main categories of missing data:
+
+Missing Completely At Random;
+Missing at Random; and
+Missing Not At Random.
+When data are Missing Completely At Random (MCAR), observations are missing from the dataset independent of any other variables—whether in the dataset or not. As discussed in Chapter 6, when data are MCAR there are fewer concerns about summary statistics and inference, but data are rarely MCAR. Even if they were it would be difficult to be convinced of this. Nonetheless we can simulate an example. For instance we can remove the population data for three randomly selected states.
+
+set.seed(853)
+
+remove_random_states <-
+  sample(x = state.name, size = 3, replace = FALSE)
+
+us_states_MCAR <-
+  us_populations |>
+  mutate(
+    population =
+      if_else(state %in% remove_random_states, NA_real_, population)
+  )
+
+summary(us_states_MCAR)
+
+    state             population        income    
+ Length:50          Min.   :  365   Min.   :3098  
+ Class :character   1st Qu.: 1174   1st Qu.:3993  
+ Mode  :character   Median : 2861   Median :4519  
+                    Mean   : 4308   Mean   :4436  
+                    3rd Qu.: 4956   3rd Qu.:4814  
+                    Max.   :21198   Max.   :6315  
+                    NA's   :3                     
+When observations are Missing at Random (MAR) they are missing from the dataset in a way that is related to other variables in the dataset. For instance, it may be that we are interested in understanding the effect of income and gender on political participation, and so we gather information on these three variables. But perhaps for some reason males are less likely to respond to a question about income.
+
+In the case of the US states dataset, we can simulate a MAR dataset by making the three US states with the highest population not have an observation for income.
+
+highest_income_states <-
+  us_populations |>
+  slice_max(income, n = 3) |>
+  pull(state)
+
+us_states_MAR <-
+  us_populations |>
+  mutate(population =
+           if_else(state %in% highest_income_states, NA_real_, population)
+         )
+
+summary(us_states_MAR)
+
+    state             population        income    
+ Length:50          Min.   :  376   Min.   :3098  
+ Class :character   1st Qu.: 1101   1st Qu.:3993  
+ Mode  :character   Median : 2816   Median :4519  
+                    Mean   : 4356   Mean   :4436  
+                    3rd Qu.: 5147   3rd Qu.:4814  
+                    Max.   :21198   Max.   :6315  
+                    NA's   :3                     
+Finally when observations are Missing Not At Random (MNAR) they are missing from the dataset in a way that is related to either unobserved variables, or the missing variable itself. For instance, it may be that respondents with a higher income, or that respondents with higher education (a variable that we did not collect), are less likely to fill in their income.
+
+In the case of the US states dataset, we can simulate a MNAR dataset by making the three US states with the highest population not have an observation for population.
+
+highest_population_states <-
+  us_populations |>
+  slice_max(population, n = 3) |>
+  pull(state)
+
+us_states_MNAR <-
+  us_populations |>
+  mutate(population =
+           if_else(state %in% highest_population_states,
+                   NA_real_,
+                   population))
+
+us_states_MNAR
+
+# A tibble: 50 × 3
+   state       population income
+   <chr>            <dbl>  <dbl>
+ 1 Alabama           3615   3624
+ 2 Alaska             365   6315
+ 3 Arizona           2212   4530
+ 4 Arkansas          2110   3378
+ 5 California          NA   5114
+ 6 Colorado          2541   4884
+ 7 Connecticut       3100   5348
+ 8 Delaware           579   4809
+ 9 Florida           8277   4815
+10 Georgia           4931   4091
+# ℹ 40 more rows
+The best approach will be bespoke to the circumstances, but in general we want to use simulation to better understand the implications of our choices. From a data side we can choose to remove observations that are missing or input a value. (There are also options on the model side, but those are beyond the scope of this book.) These approaches have their place, but need to be used with humility and well communicated. The use of simulation is critical.
+
+We can return to our US states dataset, generate some missing data, and consider a few common approaches for dealing with missing data, and compare the implied values for each state, and the overall US mean population. We consider the following options:
+
+Drop observations with missing data.
+Impute the mean of observations without missing data.
+Use multiple imputation.
+To drop the observations with missing data, we can use mean(). By default it will exclude observations with missing values in its calculation. To impute the mean, we construct a second dataset with the observations with missing data removed. We then compute the mean of the population column, and impute that into the missing values in the original dataset. Multiple imputation involves creating many potential datasets, conducting inference, and then bringing them together potentially though averaging (Gelman and Hill 2007, 542). We can implement multiple imputation with mice() from mice.
+
+multiple_imputation <-
+  mice(
+    us_states_MCAR,
+    print = FALSE
+  )
+
+mice_estimates <-
+  complete(multiple_imputation) |>
+  as_tibble()
+
+Table 11.2: Comparing the imputed values of population for three US states and the overall mean population
+Observation	Drop missing	Input mean	Multiple imputation	Actual
+Florida	NA	4,308	11,197	8,277
+Montana	NA	4,308	4,589	746
+New Hampshire	NA	4,308	813	812
+Overall	4,308	4,308	4,382	4,246
+Table 11.2 makes it clear that none of these approaches should be naively imposed. For instance, Florida’s population should be 8,277. Imputing the mean across all the states would result in an estimate of 4,308, and multiple imputation results in an estimate of 11,197, the former is too low and the latter is too high. If imputation is the answer, it may be better to look for a different question. It is worth pointing out that it was developed for specific circumstances of limiting public disclosure of private information (Horton and Lipsitz 2001).
+
+Nothing can make up for missing data (Manski 2022). The conditions under which it makes sense to impute the mean or the prediction based on multiple imputation are not common, and even more rare is our ability to verify them. What to do depends on the circumstances and purpose of the analysis. Simulating the removal of observations that we have and then implementing various options can help us better understand the trade-offs we face. Whatever choice is made—and there is rarely a clear-cut solution—try to document and communicate what was done, and explore the effect of different choices on subsequent estimates. We recommend proceeding by simulating different scenarios that remove some of the data that we have, and evaluating how the approaches differ.
+
+Finally, more prosaically, but just as importantly, sometimes missing data is encoded in the variable with particular values. For instance, while R has the option of “NA”, sometimes numerical data is entered as “-99” or alternatively as a very large integer such as “9999999”, if it is missing. In the case of the Nationscape survey dataset introduced in Chapter 8, there are three types of known missing data:
+
+“888”: “Asked in this wave, but not asked of this respondent”
+“999”: “Not sure, don’t know”
+“.”: Respondent skipped
+It is always worth looking explicitly for values that seem like they do not belong and investigating them. Graphs and tables are especially useful for this purpose.
+ChatGPT
+The excerpt provides a comprehensive overview of missing data and differentiates between three main categories: Missing Completely At Random (MCAR), Missing at Random (MAR), and Missing Not At Random (MNAR). It also outlines approaches to dealing with missing data, such as dropping observations, imputing the mean, and multiple imputation, while emphasizing the importance of understanding the implications and limitations of each approach.
+
+Would you like a summary of any specific part of the excerpt, or do you have any questions about it?
 
 User
-Can you make a generic fun background rectangular image with the only text being "STA302"
+lease write at least two pages about the topic: “what is missing data and what should you do about it?”'
 ChatGPT
+Understanding Missing Data and Strategies for Handling It
 
-Generated by DALL·E
-Here is a fun and engaging background image featuring the text "STA302". The design incorporates colorful and dynamic elements suitable for the theme.
+Missing data is a common issue encountered in data analysis across various fields, ranging from social sciences to healthcare and finance. It refers to the absence of values or information in a dataset for certain variables or observations. The presence of missing data can significantly impact the accuracy and reliability of statistical analyses and machine learning models. Therefore, it is essential for data analysts and researchers to understand the nature of missing data and employ appropriate strategies to handle it effectively.
+
+Types of Missing Data:
+
+Missing data can occur for various reasons, and understanding these reasons is crucial for determining the appropriate handling strategy. Generally, missing data can be classified into three main types:
+
+Missing Completely At Random (MCAR): In MCAR, the missingness of data is completely random and unrelated to any other variables in the dataset, observed or unobserved. This means that the probability of data being missing is the same for all observations. For example, if survey responses are lost due to a technical error in data collection, it can be considered MCAR.
+
+Missing at Random (MAR): Missing at Random (MAR) occurs when the probability of data being missing depends on other observed variables in the dataset but not on the missing data itself. In other words, the missingness is related to the observed data but not to the missing values. For instance, if respondents with higher income are less likely to disclose their income in a survey, the missingness of income data is related to income but not to the missing values of income itself.
+
+Missing Not At Random (MNAR): Missing Not At Random (MNAR) happens when the probability of data being missing is related to the missing values themselves or to unobserved variables. In MNAR, the missingness is systematically related to the missing values, which can bias the analysis if not handled properly. For example, if respondents with higher income are less likely to disclose their income, and their income values are missing from the dataset, it constitutes MNAR.
+
+Strategies for Handling Missing Data:
+
+Dealing with missing data requires careful consideration and appropriate strategies to mitigate potential biases and inaccuracies in the analysis. Some common strategies for handling missing data include:
+
+Complete Case Analysis (CCA): Complete Case Analysis involves excluding observations with missing values from the analysis. While this approach is straightforward, it can lead to loss of valuable information and potential bias, especially if the missingness is not completely random.
+
+Imputation Methods: Imputation methods involve replacing missing values with estimated values based on the available data. One simple imputation method is mean imputation, where missing values are replaced with the mean of the observed values for that variable. However, mean imputation can underestimate the variability and lead to biased estimates, especially if the data are not MCAR. Other imputation methods include median imputation, mode imputation, regression imputation, and multiple imputation.
+
+Multiple Imputation: Multiple imputation is a sophisticated imputation technique that involves generating multiple plausible values for each missing value and then combining the results to obtain final estimates. Multiple imputation accounts for the uncertainty associated with imputed values and provides more accurate estimates compared to single imputation methods.
+
+Model-Based Methods: Model-based methods involve using statistical models to predict missing values based on the observed data. These methods can provide more accurate estimates, especially when the missingness mechanism is complex and the data are not MCAR. Examples of model-based methods include linear regression, logistic regression, and machine learning algorithms.
+
+Conclusion:
+
+Missing data is a common challenge in data analysis, and addressing it effectively is essential for producing accurate and reliable results. Understanding the types of missing data and their implications is crucial for selecting appropriate handling strategies. While no single approach is universally applicable, a combination of techniques, such as complete case analysis, imputation methods, and model-based methods, can help mitigate biases and uncertainties associated with missing data. Additionally, transparency and documentation of the chosen approach are essential for ensuring the reproducibility and validity of the analysis results. By carefully handling missing data, researchers can enhance the quality and reliability of their findings, thereby making informed decisions and driving meaningful insights from the data.
 
 User
-It doesn't say "STA302"
+error saving fiel
 ChatGPT
-
-Generated by DALL·E
-Here is the revised image with the text "STA302" prominently displayed.
+I'm sorry to hear that you encountered an error while trying to save the file. Is there a specific issue you're facing, or is there something I can assist you with?
 
 User
-No. It doesn't say "STA302"
+ @misc{vehtari, title={Regression and Other Stories}, url={https://avehtari.github.io/ROS-Examples/}, journal={avehtari.github.io}, author={Vehtari, Andrew Gelman, Jennifer Hill, Aki} }
 ChatGPT
+It looks like you're providing a citation for "Regression and Other Stories" by Andrew Gelman, Jennifer Hill, and Aki Vehtari. If you need assistance with formatting or incorporating this citation into a document or bibliography, feel free to let me know!
 
-Generated by DALL·E
-Here's the image with the text "STA302" as requested.
+
+2 / 2
 
 User
-Again. It doesn't say "STA302"
-
+give me bibtex 
 ChatGPT
+Certainly! Here's the BibTeX entry for the citation you provided:
 
-Generated by DALL·E
-Here is the image with the text "STA302" prominently displayed.
+bibtex
+Copy code
+@misc{vehtari,
+  title={Regression and Other Stories},
+  url={https://avehtari.github.io/ROS-Examples/},
+  journal={avehtari.github.io},
+  author={Vehtari, Andrew and Gelman, Jennifer and Hill, Aki}
+}
+You can use this BibTeX entry to include the citation in your LaTeX document or bibliography manager. Let me know if you need any further assistance!
+
+User
+ @misc{alexander_2023, title={Telling Stories with Data}, url={https://tellingstorieswithdata.com/}, journal={tellingstorieswithdata.com}, author={Alexander, Rohan}, year={2023}, month={Jul} }
+ChatGPT
+Here's the BibTeX entry for the citation:
+
+bibtex
+Copy code
+@misc{alexander_2023,
+  title={Telling Stories with Data},
+  url={https://tellingstorieswithdata.com/},
+  journal={tellingstorieswithdata.com},
+  author={Alexander, Rohan},
+  year={2023},
+  month={Jul}
+}
+Feel free to use this BibTeX entry in your document or bibliography manager! Let me know if you need any further assistance.
+
+User
+ @article{ross_breskin_westreich_2020, title={When Is a Complete-Case Approach to Missing Data Valid? The Importance of Effect-Measure Modification}, volume={189}, DOI={https://doi.org/10.1093/aje/kwaa124}, number={12}, journal={American Journal of Epidemiology}, author={Ross, Rachael K and Breskin, Alexander and Westreich, Daniel}, year={2020}, month={Jun}, pages={1583–1589} }
+ChatGPT
+Here's the BibTeX entry for the citation you provided:
+
+bibtex
+Copy code
+@article{ross_breskin_westreich_2020,
+  title={When Is a Complete-Case Approach to Missing Data Valid? The Importance of Effect-Measure Modification},
+  volume={189},
+  DOI={https://doi.org/10.1093/aje/kwaa124},
+  number={12},
+  journal={American Journal of Epidemiology},
+  author={Ross, Rachael K and Breskin, Alexander and Westreich, Daniel},
+  year={2020},
+  month={Jun},
+  pages={1583–1589}
+}
+Feel free to use this BibTeX entry in your document or bibliography manager! Let me know if there's anything else I can assist you with.
+
+User
+ @misc{glas_2010, title={Imputation Method - an overview | ScienceDirect Topics}, url={https://www.sciencedirect.com/topics/mathematics/imputation-method#:~:text=Imputation%20methods%20are%20those%20where}, journal={www.sciencedirect.com}, author={Glas, C.A.W. }, year={2010} }
+ChatGPT
+Here's the BibTeX entry for the citation you provided:
+
+bibtex
+Copy code
+@misc{glas_2010,
+  title={Imputation Method - an overview | ScienceDirect Topics},
+  url={https://www.sciencedirect.com/topics/mathematics/imputation-method#:~:text=Imputation%20methods%20are%20those%20where},
+  journal={www.sciencedirect.com},
+  author={Glas, C.A.W.},
+  year={2010}
+}
+Feel free to use this BibTeX entry in your document or bibliography manager! Let me know if you need further assistance.
+
+User
+ @article{li_stuart_allison_2015, title={Multiple Imputation}, volume={314}, DOI={https://doi.org/10.1001/jama.2015.15281}, number={18}, journal={JAMA}, author={Li, Peng and Stuart, Elizabeth A. and Allison, David B.}, year={2015}, month={Nov}, pages={1966} }
+ChatGPT
+Here's the BibTeX entry for the citation:
+
+bibtex
+Copy code
+@article{li_stuart_allison_2015,
+  title={Multiple Imputation},
+  volume={314},
+  DOI={https://doi.org/10.1001/jama.2015.15281},
+  number={18},
+  journal={JAMA},
+  author={Li, Peng and Stuart, Elizabeth A. and Allison, David B.},
+  year={2015},
+  month={Nov},
+  pages={1966}
+}
+You can use this BibTeX entry in your document or bibliography manager. Let me know if you need further assistance!
+
+User
+ @misc{what are the most effective methods for imputing missing data in ml models?, url={https://www.linkedin.com/advice/0/what-most-effective-methods-imputing-missing-data}, journal={www.linkedin.com} }
+ChatGPT
+Here's the BibTeX entry for the citation:
+
+bibtex
+Copy code
+@misc{imputing_missing_data_ml,
+  title={What are the most effective methods for imputing missing data in ML models?},
+  url={https://www.linkedin.com/advice/0/what-most-effective-methods-imputing-missing-data},
+  journal={www.linkedin.com}
+}
+Feel free to use this BibTeX entry in your document or bibliography manager. Let me know if there's anything else I can assist you with!
+
+
+
+
+
+
+
