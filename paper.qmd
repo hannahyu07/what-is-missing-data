@@ -35,7 +35,7 @@ Another common method to handle missing data is the imputation methods. This met
 
 Multiple imputation is a branch of the imputation methods that are more sophisticated than mean imputation. "Multiple imputation fills in missing values by generating plausible numbers derived from distributions of and relationships among observed variables in the data set. [@cite5]" This method accounts for the uncertainty associated with imputed values and provides more accurate estimates compared to single imputation methods.
 
-One of the most sophisticated and flexible method is the model-based methods. It requires  involve using probabilistic models to predict missing values based on the observed data [@cite6]. Some common model used in this method include linear regression, logistic regression, and machine learning algorithms. These methods can provide more accurate estimates, especially when the  mechanism of the missing data is complex. However these methods are generally harder to interpret and requires more underlying assumptions and parameters. 
+One of the most sophisticated and flexible method is the model-based methods. It requires  involve using probabilistic models to predict missing values based on the observed data [@cite6]. Some common model used in this method include linear regression, logistic regression, and machine learning algorithms. These methods can provide more accurate estimates, especially when the  mechanism of the missing data is complex. However these methods are generally harder to interpret and requires more underlying assumptions and parameters than simpler methods like Complete Case Analysis. 
 
 # Conclusion:
 
