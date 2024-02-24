@@ -2,7 +2,7 @@
 title: "What is Missing Data and What Should You Do about It?"
 author: 
   - Hannah Yu
-thanks: "Code and data are available at: https://github.com/hannahyu07/what-is-missing-data"
+thanks: "Code and data are available at: https://github.com/hannahyu07/what-is-missing-data" Thank you to Diana Liu for your peer review. 
 date: today
 date-format: long
 format: pdf
@@ -10,20 +10,20 @@ number-sections: true
 bibliography: references.bib
 ---
 
-# Understanding Missing Data and Strategies for Handling It
+# Introduction
 
-Missing data is a common issue encountered in data analysis across various fields, ranging from social sciences to healthcare and finance. It refers to the absence of values or information in a dataset for certain variables or observations. The presence of missing data can significantly impact the accuracy and reliability of statistical analyses and machine learning models. Therefore, it is essential for data analysts and researchers to understand the nature of missing data and employ appropriate strategies to handle it effectively.
+Missing data, or  absence of values or information in a dataset for certain variables or observations, is a common issue in data analysis across various fields, ranging from social sciences to finance. The accuracy and reliability of data analysis can be severely impacted by missing data. Therefore, it is important for researchers to understand the nature of missing data and employ appropriate strategies to handle it effectively.
 
 # Types of Missing Data:
 
 Missing data can occur under various conditions with various reasons. It is crucial to have a good understanding of these reasons if one wishes to handle this situation strategically. 
 Missing data can occur for various reasons, and understanding these reasons is crucial for determining the appropriate handling strategy. According to the classification of [@cite1], known-missing observations, or observations we are aware that are missing, can be categorized into the following three type: Missing Completely At Random (MCAR), Missing at Random (MAR), and Missing Not At Random (MNAR).
 
-Missing Completely At Random (MCAR): When data are missing completely at random, the observations that are missing are unrelated to any other variables regardless if the variable is in the dataset or not. Under this condition, the probability of data being missing is the same for all observations. For example, if survey responses are lost due to a technical error in data collection, it can be considered MCAR because the data lost is completely random. 
+When data are Missing Completely at Random (MCAR), the observations that are missing are unrelated to any other variables regardless if the variable is in the dataset or not. Under this condition, the probability of data being missing is the same for all observations. For example, if survey responses are lost due to a technical error in data collection, it can be considered MCAR because the data lost is completely random. Missing data due to MCAR would not introduce a bias in analysis since the data missing is random. However, the standard error of the sample estimates is increased because the sample size decreased [@cite7]. Additionally, it is important to note that in real life, it is extremely difficult for researchers to determine if the missing data is truely MCAR as it involves many statistical tests. 
 
-Missing at Random (MAR): Missing at Random (MAR) occurs when the probability of data being missing depends on other variables in the dataset but not on the missing data itself. In other words, the missingness is related to the observed data but not to the missing values. For example, if we are studying the effect of income and gender on political participation, after having gathered all three of the variable of interests, we noticed the pattern that male are less disclose about their income [@cite2].
+Missing at Random (MAR) occurs when the probability of data being missing depends on other variables in the dataset but not on the missing data itself. For example, if we are studying the effect of income and gender on political participation, after having gathered all three of the variable of interests, we noticed the pattern that male are less prone to disclose about their income [@cite2].This scenario is MAR because the missing data "income" depends on the variable "income" which is in the dataset.MAR is more common than MCAR and requires more assumptions to make sure it does not lead to biased parameter estimates. 
 
-Missing Not At Random (MNAR): Missing Not At Random (MNAR) happens when the probability of data being missing is related to the missing values themselves or to unobserved variables. In MNAR, the missingness is systematically related to the missing values, which can bias the analysis if not handled properly. For example, if respondents with higher income are less likely to disclose their income, it is MNAR because the missing values in income is related to income itself [@cite2].
+Missing Not At Random (MNAR) happens when the probability of data being missing is related to the missing values themselves or to unobserved variables. For example, if respondents with higher income are less likely to disclose their income, it is MNAR because the missing values in income is related to income itself [@cite2]. Not addressing MNAR may lead to biased estimates and incorrect conclusions since the missing data is not random and may systematically differ from the known data. 
 
 # Strategies for Handling Missing Data:
 
@@ -31,15 +31,15 @@ Dealing with missing data requires careful consideration and appropriate strateg
 
 Complete Case Analysis (CCA) is the most straightforward approach in handling missing data.  CCA, also known as list-wise deletion, involves excluding observations with missing values from the analysis [@cite3]. This approach is convenient, but it can lead to loss of valuable information and potential bias, especially if the missing data is not completely random.
 
-Another common method to handle missing data is the imputation methods. This methods involve replacing missing values with estimated values based on the available data. One of the imputation methods is mean imputation, where researchers replace missing values by the mean of the observed values for that variable [@cite4]. The drawbacks of mean imputation is that it can underestimate the variability and lead to biased estimates, especially if the data are not MCAR. There are a variety of imputation methods including median imputation, mode imputation, regression imputation, and multiple imputation.
+Another common method to handle missing data the imputation method. This method involve replacing missing values with estimated values based on the available data. One of the imputation methods is mean imputation, where researchers replace missing values by the mean of the observed values for that variable [@cite4]. The drawback of mean imputation is that it can underestimate the variability and lead to biased estimates, especially if the data are not MCAR. There are a variety of imputation methods including median imputation, mode imputation, regression imputation, and multiple imputation.
 
 Multiple imputation is a branch of the imputation methods that are more sophisticated than mean imputation. "Multiple imputation fills in missing values by generating plausible numbers derived from distributions of and relationships among observed variables in the data set. [@cite5]" This method accounts for the uncertainty associated with imputed values and provides more accurate estimates compared to single imputation methods.
 
-One of the most sophisticated and flexible method is the model-based methods. It requires  involve using probabilistic models to predict missing values based on the observed data [@cite6]. Some common model used in this method include linear regression, logistic regression, and machine learning algorithms. These methods can provide more accurate estimates, especially when the  mechanism of the missing data is complex. However these methods are generally harder to interpret and requires more underlying assumptions and parameters than simpler methods like Complete Case Analysis. 
+One of the most sophisticated and flexible methods is the model-based methods. It involves using probabilistic models to predict missing values based on the observed data [@cite6]. Some common model used in this method include linear regression, logistic regression, and machine learning algorithms. These methods can provide more accurate estimates, especially when the  mechanism of the missing data is complex. However these methods are generally harder to interpret and require more underlying assumptions and parameters than simpler methods like Complete Case Analysis. 
 
 # Conclusion:
 
-Missing data is a common challenge in data analysis, and addressing it effectively is essential for producing accurate and reliable results. In order to select appropriate handling strategies, it is important to understand the types of missing data and their implications. 
+Missing data is a common challenge in data analysis, and addressing it effectively is essential for producing accurate and reliable results. In order to select appropriate handling strategies, it is important to understand the types of missing data and their implications. As no single approach dominates the others, researchers need to wisely select the most appropriate approach for each situation. By incorporating various techniques and analysis methods, researchers may be able to mitigate the effect generated by missing data and produce unbiased results. 
 
 
 
