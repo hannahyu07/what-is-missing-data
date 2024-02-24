@@ -1,4 +1,4 @@
-# What is Missing Data
+# Understanding and Addressing Missing Data in Data Analysis
 
 ## Overview of Paper
 This paper answers the question: what is missing data and what should you do about it?
