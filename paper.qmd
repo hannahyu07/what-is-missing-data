@@ -1,5 +1,5 @@
 ---
-title: "What is Missing Data and What Should You Do about It?"
+title: "Understanding and Addressing Missing Data in Data Analysis"
 author: 
   - Hannah Yu
 thanks: "Code and data are available at: https://github.com/hannahyu07/what-is-missing-data. Thank you to Diana Liu for your peer review."
