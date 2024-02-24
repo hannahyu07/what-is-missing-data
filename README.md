@@ -1,4 +1,4 @@
-# what-is-missing-data
+# What is Missing Data
 
 ## Overview of Paper
 This paper provides an overview of of the question: what is missing data and what should you do about it?
